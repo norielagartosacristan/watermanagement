@@ -1,10 +1,11 @@
 <?php
 // Database connection
-$mysqli = new mysqli("localhost", "username", "password", "database_name");
+$mysqli = new mysqli("localhost", "root", "", "grswatermanagement");
 
 if ($mysqli->connect_error) {
     die("Connection failed: " . $mysqli->connect_error);
 }
+
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $billingReferenceNumber = $_POST['billingReferenceNumber'];
@@ -12,7 +13,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $paymentDate = date('Y-m-d');
 
     // Fetch billing details using billing reference number
-    $billingQuery = "SELECT BillingID, TotalAmountWithPenalty, AccountNumber FROM Billing WHERE ReferenceNumber = ?";
+    $billingQuery = "SELECT BillingID, TotalAmount, PenaltyAmount, AccountNumber FROM Billing WHERE ReferenceNumber = ?";
     $stmt = $mysqli->prepare($billingQuery);
     $stmt->bind_param("s", $billingReferenceNumber);
     $stmt->execute();
@@ -21,8 +22,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($billingResult->num_rows > 0) {
         $billingRow = $billingResult->fetch_assoc();
         $billingID = $billingRow['BillingID'];
-        $totalAmountWithPenalty = $billingRow['TotalAmountWithPenalty'];
+        $totalAmount = $billingRow['TotalAmount'];
+        $penaltyAmount = $billingRow['PenaltyAmount'];
         $accountNumber = $billingRow['AccountNumber'];
+
+        // Calculate Total Amount with Penalty
+        $totalAmountWithPenalty = $totalAmount + $penaltyAmount;
 
         // Check if the payment amount is sufficient
         if ($paymentAmount >= $totalAmountWithPenalty) {
@@ -57,4 +62,3 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 $mysqli->close();
-?>
